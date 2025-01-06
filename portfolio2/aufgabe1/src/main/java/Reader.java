@@ -11,16 +11,17 @@ public class Reader extends Thread {
     @Override
     public void run() {
         while (!isInterrupted()) {
-            while (Main.lock == false) {
+            while (!isInterrupted() && Main.lock == false) {
                 // do nothing (spinlock)
             }
     
             // Add the current time to the list
             finishTimes.add(System.nanoTime());
 
+            if (isInterrupted()) break;
+            
             // Reset the lock (main thread is waiting)
-            if (!isInterrupted())
-                Main.lock = false;
+            Main.lock = false;
         }
     }
 }

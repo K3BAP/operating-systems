@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,6 +23,11 @@ public class Main {
         for (Long long1 : latencies) {
             System.out.println(long1);
         }
+
+        Long min = calculateMinWith95Confidence(latencies);
+
+        System.out.println("Size of data set: " + latencies.size());
+        System.out.println("Minimum with 95 percentile confidence: " + min);
     }
 
     private static void measure() {
@@ -52,5 +58,20 @@ public class Main {
         }
 
         return results;
+    }
+
+    public static Long calculateMinWith95Confidence(List<Long> numbers) {
+        if (numbers == null || numbers.isEmpty()) {
+            throw new IllegalArgumentException("The list of numbers cannot be null or empty.");
+        }
+
+        // Sort the list
+        Collections.sort(numbers);
+
+        // Calculate the index for the 5th percentile
+        int percentileIndex = (int) Math.ceil(0.05 * numbers.size()) - 1;
+
+        // Return the value at that index
+        return numbers.get(percentileIndex);
     }
 }
