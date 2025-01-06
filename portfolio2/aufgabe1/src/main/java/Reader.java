@@ -11,7 +11,7 @@ public class Reader extends Thread {
     @Override
     public void run() {
         while (!isInterrupted()) {
-            while (!isInterrupted() && Main.lock == false) {
+            while (!isInterrupted() && Main.getLock() == false) {
                 // do nothing (spinlock)
             }
     
@@ -21,7 +21,7 @@ public class Reader extends Thread {
             if (isInterrupted()) break;
             
             // Reset the lock (main thread is waiting)
-            Main.lock = false;
+            Main.setLock(false);
         }
     }
 }

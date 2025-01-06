@@ -1,10 +1,9 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 public class Main {
-    private static final int recursions = 100;
+    private static final int recursions = 5000000;
 
     public static Boolean lock = false;
     private static Reader readerThread;
@@ -16,27 +15,26 @@ public class Main {
         readerThread = new Reader(messageTimes);
         readerThread.start();
 
+        System.out.println("Starting measurement.");
         measure();
+        System.out.println("Measurement completed.");
         readerThread.interrupt();
 
+        System.out.println("Calculating latencies");
         List<Long> latencies = calculateLatencies(messageTimes);
-        for (Long long1 : latencies) {
-            System.out.println(long1);
-        }
-
-        Long min = calculateMinWith95Confidence(latencies);
 
         System.out.println("Size of data set: " + latencies.size());
-        System.out.println("Minimum with 95 percentile confidence: " + min);
+
+        // TODO: Write to file
     }
 
     private static void measure() {
         for (int i = 0; i < recursions; i++) {
             // set lock to true -> send message
-            lock = true;
+            setLock(true);;
 
             // wait for the return message
-            while (lock) {
+            while (getLock()) {
                 // Do nothing (spinlock)
             }
 
@@ -60,18 +58,11 @@ public class Main {
         return results;
     }
 
-    public static Long calculateMinWith95Confidence(List<Long> numbers) {
-        if (numbers == null || numbers.isEmpty()) {
-            throw new IllegalArgumentException("The list of numbers cannot be null or empty.");
-        }
+    public static synchronized boolean getLock() {
+        return lock;
+    }
 
-        // Sort the list
-        Collections.sort(numbers);
-
-        // Calculate the index for the 5th percentile
-        int percentileIndex = (int) Math.ceil(0.05 * numbers.size()) - 1;
-
-        // Return the value at that index
-        return numbers.get(percentileIndex);
+    public static synchronized void setLock(boolean value) {
+        lock = value;
     }
 }
