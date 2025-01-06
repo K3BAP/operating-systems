@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +28,7 @@ public class Main {
 
         System.out.println("Size of data set: " + latencies.size());
 
-        // TODO: Write to file
+        exportLatencies(latencies, "./latencies.txt");
     }
 
     private static void measure() {
@@ -56,6 +59,18 @@ public class Main {
         }
 
         return results;
+    }
+
+    private static void exportLatencies(List<Long> latencies, String filename) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            for (Long latency : latencies) {
+                writer.write(latency.toString());
+                writer.newLine();
+            }
+            System.out.println("Latencies exported to " + filename);
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 
     public static synchronized boolean getLock() {
