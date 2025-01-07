@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Main {
-    private static final int recursions = 5000000;
+    private static final int recursions = 50000;
 
     public static Boolean lock = false;
     private static Reader readerThread;
