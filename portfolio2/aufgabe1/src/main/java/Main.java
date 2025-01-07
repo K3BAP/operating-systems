@@ -13,14 +13,14 @@ public class Main {
     public static void main(String[] args) {
         minimumLatencies = new ArrayList<>();
         System.out.println("Running " + repeatExperimentCount + " experiments with " + recursions + " recursions each.");
+        Experiment experiment = new Experiment(recursions);
 
         for (int i = 0; i < repeatExperimentCount; i++) {
             System.out.println("Running experiment " + (i + 1) + "/" + repeatExperimentCount);
-            Experiment experiment = new Experiment(recursions);
             long min = experiment.runExperiment();
             minimumLatencies.add(min);
         }
-
+        experiment.finish();
         exportLatencies(minimumLatencies, "./latencies.txt");
     }
 

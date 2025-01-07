@@ -12,6 +12,9 @@ public class Experiment {
 
     public Experiment(int recursions) {
         this.recursions = recursions;
+        messageTimes = new ArrayList<>(recursions*2);
+        this.readerThread = new Reader(this);
+        readerThread.start();
     }
     
     /**
@@ -19,16 +22,14 @@ public class Experiment {
      * @return Minimum latency value
      */
     public long runExperiment() {
-        messageTimes = new ArrayList<>(recursions*2);
-        readerThread = new Reader(this);
-        readerThread.start();
-
+        messageTimes.clear();
         measure(recursions);
-        readerThread.interrupt();
-
         List<Long> latencies = calculateLatencies(messageTimes);
-
         return Collections.min(latencies);
+    }
+
+    public void finish() {
+        readerThread.interrupt();
     }
 
     private void measure(int recursions) {
