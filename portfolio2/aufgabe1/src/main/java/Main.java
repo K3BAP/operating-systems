@@ -1,15 +1,27 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
     private static final int recursions = 50000;
+    private static final int repeatExperimentCount = 10000;
+
+    private static List<Long> minimumLatencies;
 
     public static void main(String[] args) {
-        Experiment experiment = new Experiment();
+        minimumLatencies = new ArrayList<>();
+        System.out.println("Running " + repeatExperimentCount + " experiments with " + recursions + " recursions each.");
 
-        experiment.runExperiment(recursions);
+        for (int i = 0; i < repeatExperimentCount; i++) {
+            System.out.println("Running experiment " + (i + 1) + "/" + repeatExperimentCount);
+            Experiment experiment = new Experiment(recursions);
+            long min = experiment.runExperiment();
+            minimumLatencies.add(min);
+        }
+
+        exportLatencies(minimumLatencies, "./latencies.txt");
     }
 
     private static void exportLatencies(List<Long> latencies, String filename) {

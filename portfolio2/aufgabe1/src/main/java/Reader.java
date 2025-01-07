@@ -1,5 +1,3 @@
-import java.util.List;
-
 public class Reader extends Thread {
 
     private Experiment experiment;

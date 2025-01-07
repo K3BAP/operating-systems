@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -6,22 +7,28 @@ public class Experiment {
     private Boolean lock = false;
     private Reader readerThread;
 
+    private int recursions;
     private List<Long> messageTimes;
+
+    public Experiment(int recursions) {
+        this.recursions = recursions;
+    }
     
-    public void runExperiment(int recursions) {
+    /**
+     * Runs the experiment with the recursion count set in the constructor
+     * @return Minimum latency value
+     */
+    public long runExperiment() {
         messageTimes = new ArrayList<>(recursions*2);
         readerThread = new Reader(this);
         readerThread.start();
 
-        System.out.println("Starting measurement.");
         measure(recursions);
-        System.out.println("Measurement completed.");
         readerThread.interrupt();
 
-        System.out.println("Calculating latencies");
         List<Long> latencies = calculateLatencies(messageTimes);
 
-        System.out.println("Size of data set: " + latencies.size());
+        return Collections.min(latencies);
     }
 
     private void measure(int recursions) {
