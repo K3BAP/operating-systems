@@ -1,6 +1,6 @@
 *
 !.gitignore
 !*.tex
-!*.pdf
+*.pdf
 !img
 !img/*
