@@ -16,11 +16,9 @@ ci_upper <- results$conf.int[2]
 
 
 # Plot the distribution
-hist(latencies, main = paste0("Minimum Latency Distribution among ", length(latencies), " experiments"), xlab = "Minimum Latency (ns)")
+hist(latencies, main = paste0("Minimum Latency Distribution among ", length(latencies), " experiments"), xlab = "Minimum Latency (ns)", breaks = seq(0, 300, l=30))
 
 # Plot mean and confidence interval
 abline(v = mean_latency, col = "blue", lwd = 2)
 abline(v = ci_upper, col = "skyblue", lwd = 2)
 abline(v = ci_lower, col = "skyblue", lwd = 2)
-
-
