@@ -36,11 +36,11 @@ public class Experiment {
 
     private void measure(int recursions) {
         for (int i = 0; i < recursions; i++) {
-            // add current time to list
-            messageTimes.add(System.nanoTime());
-
             // set lock to true -> send message
             lock.set(true);;
+
+            // add current time to list
+            messageTimes.add(System.nanoTime());
 
             // wait for the return message
             while (lock.get()) {
