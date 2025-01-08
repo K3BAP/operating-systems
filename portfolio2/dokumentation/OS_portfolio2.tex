@@ -109,7 +109,7 @@ Folgende Tabellen beschreiben das System, auf dem die Tests durchgeführt wurden
 \end{table}
 
 \section{Aufgabe 1 - Latenz bei Kommunikation mit Spinlock}
-\subsection*{Vorgehen zur Latenzmessung}
+\subsection*{Erste Ansätze zur Latenzmessung}
 Bei der Kommunikation über Spinlocks wartet ein Thread auf die Freigabe einer Ressource, indem er fortwährend (z.B. in einer \texttt{while}-Schleife) überprüft, ob die Ressource frei ist. 
 Um die Latenz zu messen, habe ich neben dem Main-Thread einen \texttt{Reader}-Thread erstellt, der auf die Freigabe einer Ressource (Boolean, der auf \texttt{true} gesetzt wird) wartet, und den Wert dann wieder auf \texttt{false} setzt. 
 Nachdem der Main-Thread den Wert auf \texttt{true} gesetzt hat, wartet er wiederum, bis der Wert wieder auf \texttt{false} gesetzt wird.
@@ -154,13 +154,6 @@ while (!isInterrupted()) {
 Im Ursprünglichen Versuchsaufbau habe ich für jeden Versuchsdurchlauf den \texttt{Reader}-Thread und das \texttt{Experiment}-Objekt neu erstellt und jeweils von jedem Experiment die minimale Latenz gespeichert.
 Das Ergebnis des ersten Durchlaufs ist in Abbildung \ref{img:spinlock_first} dargestellt.
 
-Wie man sieht liegt, anders als zu erwarten wäre, keine Normalverteilung der Latenzen vor.
-Nach reiflicher Überlegung hatte ich den Verdacht, dass ich durch die Instantiierung einer \texttt{Experiment}- und \texttt{Reader}-Objekts bei jedem Versuch eine große Menge ungenutzter Objekte erzeuge und dadurch ggf. der \emph{Garbage Collector} die Performance zeitweise mindert.
-
-Um einen weiteren Performance-Faktor zu optimieren, habe ich noch die Konstruktion bestehend aus Boolean und synchronized Getter- und Settermethoden gegen einen \emph{AtomicBoolean} ausgetauscht.
-
-Nachdem ich die Implementierung so angepasst habe, dass die bestehenden Objekte in jedem Experiment wiederverwendet werden können, ergab sich tatsächlich eine Normalverteilung der Minima, sodass das 95\%-Konfidenzintervall einfach berechnet werden konnte. Mehr dazu in Abschnitt \ref{sect:results}.
-
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.75\textwidth]{./img/spinlock_first_try}
@@ -168,27 +161,78 @@ Nachdem ich die Implementierung so angepasst habe, dass die bestehenden Objekte 
 	\label{img:spinlock_first}
 \end{figure}
 
+Wie man sieht liegt, anders als zu erwarten wäre, keine Normalverteilung der Latenzen vor.
+Nach reiflicher Überlegung hatte ich den Verdacht, dass ich durch die Instantiierung einer \texttt{Experiment}- und \texttt{Reader}-Objekts bei jedem Versuch eine große Menge ungenutzter Objekte erzeuge und dadurch ggf. der \emph{Garbage Collector} die Performance zeitweise mindert.
 
-\section{Ergebnisse}
-\label{sect:results}
+Um einen weiteren Performance-Faktor zu optimieren, habe ich noch die Konstruktion bestehend aus Boolean und synchronized Getter- und Settermethoden gegen einen \emph{AtomicBoolean} ausgetauscht.
 
-\subsection*{Aufgabe 1 - Spinlock}
-Es wurden 1000 Durchläufe des Experiments durchgeführt mit jeweils 50000 Wiederholungen der Messung, wobei jeweils zwei Latenzen gemessen wurden (Hin- und Rückweg).
-Insgesamt wurden pro Experiment also 100000 Latenzen gemessen und jeweils das Minimum gespeichert.
-Hier die Ergebnisse:
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.75\textwidth]{./img/spinlock_second}
-	\caption{Verteilung der Minima mit 95\%-Konfidenzintervall (blau)}
-	\label{img:spinlock_second}
-\end{figure}
+Beim Herumexperimentieren wurde mir nun mit der Zeit klar, dass die Latenz derart gering sein muss, dass sie in der gleichen Größenordnung wie die Latenz der Zeitmessung selbst liegt.
+Nachdem ich den Zeitmessungsprozess so weit ich konnte optimiert habe, sah der Prozess wie folgt aus:
+\begin{lstlisting}[language=java,caption={Latenzmessung im Main Thread (optimiert)}]
+private void measure(int recursions) {
+	long sendTime;
+	long receiveTime;
+	for (int i = 0; i < recursions; i++) {
+		// Record time first, then
+		sendTime = System.nanoTime();
+		lock.set(true);
+		while (lock.get()) {
+			// Do nothing (spinlock)
+		}
+		receiveTime = System.nanoTime();
+		
+		sendTimes.add(sendTime);
+		receiveTimes.add(receiveTime);
+	}
+}
+\end{lstlisting}
 
+\begin{lstlisting}[language=java,caption={Latenzmessung im Reader Thread (optimiert)}]
+while (!isInterrupted()) {
+	while (!experiment.lock.get()) {
+		// do nothing (spinlock)
+	}
+	
+	// Reset the lock (main thread is waiting)
+	experiment.lock.set(false);
+}
+\end{lstlisting}
+
+So wird jeweils die Zeit für einen Turn-Around gemessen, also die Zeit, die die Information von Main-Thread zum Reader-Thread und wieder zurück braucht.
+Zum Berechnen der Latenz wird diese Zahl später durch zwei geteilt.
+Allerdings ist hier immer noch auch die Latenz für das Abfragen und Speichern der aktuellen Zeit enthalten, was das Ergebnis in einer solch niedrigen Größenordnung durchaus verfälschen kann.
+
+\subsection*{Ergebnis}
+Schlussendlich habe ich mich mit dem Versuch so zufrieden gegeben.
+Ich habe 10000 Durchläufe des Experiments mit jeweils 50000 Rekursionen durchgeführt und jeweils die Minimalwerte der einzelnen Experimente zusammengetragen.
+Von 10000 Durchläufen betrug die minimale Latenz 9854 mal \textbf{genau 64 Nanosekunden}.
+Das spricht dafür, dass wir hier bereits an die Grenzen der Messgenauigkeit stoßen und daher ist die Berechnung eines Konfidenzintervalls eigentlich hinfällig. Hier aber trotzdem die geforderten Werte, auch wenn \textbf{ihre Aussagekraft durchaus angezweifelt werden kann}:
 \begin{itemize}
-	\item Durchschnittliche minimale Latenz: $182,89 ns$
-	\item 95\%-Konfidenzintervall: $182,45 ns - 183,34 ns$
+	\item Durchschnittliche Minimallatenz: $63,95 ns$
+	\item Untere Schranke des 95\%-Konfidenzintervalls: $63,92 ns$
+	\item Obere Schranke des 95\%-Konfidenzintervalls: $63,98 ns$
 \end{itemize}
 
-Die Verteilung weist dabei eine  deutliche Linksschiefe und einen Bruch beim Maximum von $210 ns$ auf.
+Hier noch eine Wertetabelle, die alle gemessenen Minimallatenzen aufzeigt.
+
+\begin{table}[H]
+	\centering
+	\label{tab:latencies}
+	\begin{tabular}{|r|r|}
+		\hline
+		Latenz ($ns$) & Häufigkeit \\
+		\hline
+		24 & 7 \\
+		30 & 1 \\
+		35 & 1 \\
+		40 & 12 \\
+		64 & 9854 \\
+		65 & 124 \\
+		120 & 1 \\
+		\hline
+	\end{tabular}
+\end{table}
+
 
 
 \end{document}
