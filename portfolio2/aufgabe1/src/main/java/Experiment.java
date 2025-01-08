@@ -2,9 +2,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Experiment {
-    private Boolean lock = false;
+    public AtomicBoolean lock = new AtomicBoolean(false);
     private Reader readerThread;
 
     private int recursions;
@@ -30,19 +31,19 @@ public class Experiment {
 
     public void finish() {
         readerThread.interrupt();
-        setLock(true);
+        lock.set(true);
     }
 
     private void measure(int recursions) {
         for (int i = 0; i < recursions; i++) {
             // add current time to list
             messageTimes.add(System.nanoTime());
-            
+
             // set lock to true -> send message
-            setLock(true);;
+            lock.set(true);;
 
             // wait for the return message
-            while (getLock()) {
+            while (lock.get()) {
                 // Do nothing (spinlock)
             }
         }
@@ -61,14 +62,6 @@ public class Experiment {
         }
 
         return results;
-    }
-
-    public synchronized boolean getLock() {
-        return lock;
-    }
-
-    public synchronized void setLock(boolean value) {
-        lock = value;
     }
 
     public List<Long> getMessageTimes() {

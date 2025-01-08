@@ -9,7 +9,7 @@ public class Reader extends Thread {
     @Override
     public void run() {
         while (!isInterrupted()) {
-            while (experiment.getLock() == false) {
+            while (!experiment.lock.get()) {
                 // do nothing (spinlock)
             }
     
@@ -19,7 +19,7 @@ public class Reader extends Thread {
             if (isInterrupted()) break;
             
             // Reset the lock (main thread is waiting)
-            experiment.setLock(false);
+            experiment.lock.set(false);
         }
     }
 }
