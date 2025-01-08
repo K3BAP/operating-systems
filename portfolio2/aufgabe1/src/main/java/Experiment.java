@@ -30,10 +30,14 @@ public class Experiment {
 
     public void finish() {
         readerThread.interrupt();
+        setLock(true);
     }
 
     private void measure(int recursions) {
         for (int i = 0; i < recursions; i++) {
+            // add current time to list
+            messageTimes.add(System.nanoTime());
+            
             // set lock to true -> send message
             setLock(true);;
 
@@ -41,9 +45,6 @@ public class Experiment {
             while (getLock()) {
                 // Do nothing (spinlock)
             }
-
-            // add current time to list
-            messageTimes.add(System.nanoTime());
         }
     }
 
