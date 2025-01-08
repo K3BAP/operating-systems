@@ -6,6 +6,7 @@ latencies <- as.numeric(readLines("../aufgabe1/latencies.txt"))
 
 # Summary statistics
 summary(latencies)
+table(latencies)
 
 # Compute mean and 95% confidence interval
 results <- t.test(latencies, conf.level = 0.95)
@@ -16,7 +17,7 @@ ci_upper <- results$conf.int[2]
 
 
 # Plot the distribution
-hist(latencies, main = paste0("Minimum Latency Distribution among ", length(latencies), " experiments"), xlab = "Minimum Latency (ns)", breaks = seq(0, 300, l=30))
+hist(latencies, main = paste0("Minimum Latency Distribution among ", length(latencies), " experiments"), xlab = "Minimum Latency (ns)")
 
 # Plot mean and confidence interval
 abline(v = mean_latency, col = "blue", lwd = 2)
