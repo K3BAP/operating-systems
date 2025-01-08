@@ -157,6 +157,8 @@ Das Ergebnis des ersten Durchlaufs ist in Abbildung \ref{img:spinlock_first} dar
 Wie man sieht liegt, anders als zu erwarten wäre, keine Normalverteilung der Latenzen vor.
 Nach reiflicher Überlegung hatte ich den Verdacht, dass ich durch die Instantiierung einer \texttt{Experiment}- und \texttt{Reader}-Objekts bei jedem Versuch eine große Menge ungenutzter Objekte erzeuge und dadurch ggf. der \emph{Garbage Collector} die Performance zeitweise mindert.
 
+Um einen weiteren Performance-Faktor zu entfernen, habe ich noch die Konstruktion bestehend aus Boolean und synchronized Getter- und Settermethoden gehen einen \emph{AtomicBoolean} ausgetauscht.
+
 Nachdem ich die Implementierung so angepasst habe, dass die bestehenden Objekte in jedem Experiment wiederverwendet werden können, ergab sich tatsächlich eine Normalverteilung der Minima, sodass das 95\%-Konfidenzintervall einfach berechnet werden konnte. Mehr dazu in Abschnitt \ref{sect:results}.
 
 \begin{figure}[H]
@@ -177,14 +179,16 @@ Hier die Ergebnisse:
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.75\textwidth]{./img/spinlock_second}
-	\caption{Verteilung der Minima mit Konfidenzintervall (blau)}
+	\caption{Verteilung der Minima mit 95\%-Konfidenzintervall (blau)}
 	\label{img:spinlock_second}
 \end{figure}
 
 \begin{itemize}
-	\item Durchschnittliche minimale Latenz: $195,31 ns$
-	\item 95\%-Konfidenzintervall: $194,39 ns - 196,22 ns$
+	\item Durchschnittliche minimale Latenz: $182,89 ns$
+	\item 95\%-Konfidenzintervall: $182,45 ns - 183,34 ns$
 \end{itemize}
+
+Die Verteilung weist dabei eine  deutliche Linksschiefe und einen Bruch beim Maximum von $210 ns$ auf.
 
 
 \end{document}
