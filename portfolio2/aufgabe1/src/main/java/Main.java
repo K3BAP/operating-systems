@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Main {
     private static final int recursions = 50000;
-    private static final int repeatExperimentCount = 1000;
+    private static final int repeatExperimentCount = 10000;
 
     private static List<Long> minimumLatencies;
 
