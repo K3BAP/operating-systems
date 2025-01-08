@@ -13,7 +13,7 @@ public class Experiment {
 
     public Experiment(int recursions) {
         this.recursions = recursions;
-        messageTimes = new ArrayList<>(recursions*2);
+        messageTimes = new ArrayList<>(recursions);
         this.readerThread = new Reader(this);
         readerThread.start();
     }
@@ -57,7 +57,7 @@ public class Experiment {
 
         while (timesIterator.hasNext()) {
             Long nextTime = timesIterator.next();
-            results.add(nextTime - lastTime);
+            results.add((nextTime - lastTime)/2);
             lastTime = nextTime;
         }
 

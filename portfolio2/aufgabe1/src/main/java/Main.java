@@ -16,7 +16,7 @@ public class Main {
         Experiment experiment = new Experiment(recursions);
 
         for (int i = 0; i < repeatExperimentCount; i++) {
-            System.out.println("Running experiment " + (i + 1) + "/" + repeatExperimentCount);
+            if ((i+1) % 100 == 0) System.out.println("Running experiment " + (i + 1) + "/" + repeatExperimentCount);
             long min = experiment.runExperiment();
             minimumLatencies.add(min);
         }
