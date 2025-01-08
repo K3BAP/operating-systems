@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -9,23 +8,26 @@ public class Experiment {
     private Reader readerThread;
 
     private int recursions;
-    private List<Long> messageTimes;
+    private List<Long> sendTimes;
+    private List<Long> receiveTimes;
 
     public Experiment(int recursions) {
         this.recursions = recursions;
-        messageTimes = new ArrayList<>(recursions);
+        this.sendTimes = new ArrayList<>(recursions);
+        this.receiveTimes = new ArrayList<>(recursions);
         this.readerThread = new Reader(this);
-        readerThread.start();
+        this.readerThread.start();
     }
     
     /**
      * Runs the experiment with the recursion count set in the constructor
      * @return Minimum latency value
      */
-    public long runExperiment() {
-        messageTimes.clear();
+    public long runExperiment() throws Exception {
+        sendTimes.clear();
+        receiveTimes.clear();
         measure(recursions);
-        List<Long> latencies = calculateLatencies(messageTimes);
+        List<Long> latencies = calculateLatencies();
         return Collections.min(latencies);
     }
 
@@ -35,36 +37,34 @@ public class Experiment {
     }
 
     private void measure(int recursions) {
+        long sendTime;
+        long receiveTime;
         for (int i = 0; i < recursions; i++) {
-            // set lock to true -> send message
-            lock.set(true);;
-
-            // add current time to list
-            messageTimes.add(System.nanoTime());
-
-            // wait for the return message
+            // Record time first, then
+            sendTime = System.nanoTime();
+            lock.set(true);
             while (lock.get()) {
                 // Do nothing (spinlock)
             }
+            receiveTime = System.nanoTime();
+
+            sendTimes.add(sendTime);
+            receiveTimes.add(receiveTime);
         }
     }
 
-    private static List<Long> calculateLatencies(List<Long> times) {
-        List<Long> results = new ArrayList<>(times.size());
+    private List<Long> calculateLatencies() throws Exception {
+        if (sendTimes.size() != receiveTimes.size()) {
+            throw new Exception("sendTimes and receiveTimes are not of equal size");
+        }
 
-        Iterator<Long> timesIterator = times.iterator();
-        Long lastTime = timesIterator.next();
+        List<Long> results = new ArrayList<>(sendTimes.size());
 
-        while (timesIterator.hasNext()) {
-            Long nextTime = timesIterator.next();
-            results.add((nextTime - lastTime)/2);
-            lastTime = nextTime;
+        for (int i = 0; i < sendTimes.size(); i++) {
+            long latency = (receiveTimes.get(i) - sendTimes.get(i))/2;
+            results.add(latency);
         }
 
         return results;
-    }
-
-    public List<Long> getMessageTimes() {
-        return this.messageTimes;
     }
 }

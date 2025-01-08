@@ -10,7 +10,7 @@ public class Main {
 
     private static List<Long> minimumLatencies;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         minimumLatencies = new ArrayList<>();
         System.out.println("Running " + repeatExperimentCount + " experiments with " + recursions + " recursions each.");
         Experiment experiment = new Experiment(recursions);
