@@ -461,4 +461,52 @@ Trotzdem gehe ich hier wieder von einer Normalverteilung aus und berechne entspr
 	\item Obere Schranke des 95\%-Konfidenzintervalls: $13,94 \mu s$
 \end{itemize}
 
+\section{Aufgabe 4 - Kommunikation zwischen Docker-Containern}
+\subsection{Versuchsaufbau / Implementierung}
+Auch hier konnte ich wieder auf die Vorarbeit aus den vorherigen Aufgaben zurückgreifen:
+Da ZeroMQ auch die Kommunikation über TCP unterstützt, ist es sehr gut geeignet, um auch über ein Docker-Netzwerk zwischen Docker-Containern zu kommunizieren.
+Diesmal mussten dafür ausschließlich die Socket-Bezeichnungen im Java-Code aus Aufgabe 3B angepasst werden und der Dateiname der Output-Datei.
+Zusätzlich dazu habe ich je ein Dockerfile für den Reader und den Writer erstellt und schließlich das ganze Projekt mit Netzwerk-Setup und Volume-Einbindung in einem \texttt{compose.yaml} zusammengefasst.
+
+\subsection{Ergebnis}
+Die Ergebnisse liegen in einer ähnlichen Größenordnung wie jene aus Aufgabe 3B, daher war keine weitere Verringerung der Wiederholungen notwendig.
+Hier die Ergebnisse:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{./img/zeromq_docker}
+	\caption{Verteilung der Minima in der Versuchsreihe zu Aufgabe 4}
+	\label{img:zeromq:docker}
+\end{figure}
+
+Auch hier liegt nicht wirklich eine Normalverteilung vor, trotzdem hier nochmal die Eckdaten des in Blau eingezeichneten Konfidenzintervalls:
+
+\begin{itemize}
+	\item Durchschnittliche Minimallatenz: $14,32 \mu s$
+	\item Untere Schranke des 95\%-Konfidenzintervalls: $14,23 \mu s$
+	\item Obere Schranke des 95\%-Konfidenzintervalls: $14,42 \mu s$
+\end{itemize}
+
+Somit liegt die minimale Latenz im Durchschnitt etwas höher als die Latenz bei IPC-Kommunikation. 
+Der Overhead durch Docker scheint also sehr gering zu sein, da die Verwendung von TCP an sich bereits einen Overhead mit sich bringt.
+
+\section{Abschließende Gedanken}
+Wie zu erwarten war, ist die Latenz bei Nutzung eines Spinlocks am geringsten, da hier nur wenige Maschineninstruktionen im Prozess involviert sind.
+Verwendet man Semaphoren, so nimmt die Latenz bereits deutlich zu, jedoch wird dadurch der Overhead an verschwendeter Rechenleistung vermieden, den ein Spinlock erzeugt.
+Erstaunlich finde ich, dass die Kommunikation über ZeroMQ sogar eine etwas geringere Latenz aufweist als die Kommunikation per Semaphore, da die Semaphore ja bereits ein Feature auf Betriebssystem-Basis ist.
+Ad-Hoc kann ich mir diesen Vorteil auch nicht erklären.
+
+Je weiter man nun die Distanz von Empfänger und Sender erhöht, desto mehr steigt auch die Latenz - so weit, so erwartbar.
+Hier ist allerdings interessant zu sehen, wie wenig Unterschied es macht, ob Sender und Empfänger nur in verschiedenen Prozessen laufen und über UNIX domain sockets kommunizieren, oder ob sie in verschiedenen Docker-Containern laufen und per TCP miteinander kommunizieren.
+
+Ein Punkt, den ich noch ansprechen möchte, ist die Verteilung der Ergebnisse. 
+Oftmals lässt sich in den Ergebnissen, anders als meiner Ansicht nach zu erwarten wäre, keine Normalverteilung erkennen. 
+Stattdessen sieht man schiefe Verteilungen und sogar Verteilungen mit mehreren lokalen Maxima.
+Um mir die Sache nochmal besser zu veranschaulichen, habe ich Scatterplots der Versuchsreihen erstellt, in denen diese Tendenz nochmal besser sichtbar wird:
+
+% TODO: Scatterplots
+
+Meine Theorie dazu ist, dass auch bei Semaphoren und ZeroMQ eine Art von Polling verwendet wird, um festzustellen, ob die Semaphore nun frei geworden ist bzw. ob eine Nachricht in der Queue anliegt.
+Wenn also zum Zeitpunkt $t_1$ gepollt wird und keine Nachricht anliegt, so vergeht mindestens eine konstante Zeit $\Delta t$ bis erneut gepollt wird und eine Chance besteht, dass die Nachricht gelesen wird, selbst wenn sie eigentlich schon sofort nach dem Verstreichen von $t_1$ gelesen werden könnte.
+
+
 \end{document}
