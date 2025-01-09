@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  reader:
+    build:
+      context: .
+      dockerfile: Reader.Dockerfile
+    container_name: reader
+    ports:
+      - "4242:4242" # Expose port 4242
+      - "4200:4200" # Expose port 4200
+    networks:
+      - app-network
+
+  client:
+    build:
+      context: .
+      dockerfile: Main.Dockerfile
+    container_name: client
+    depends_on:
+      - reader
+    networks:
+      - app-network
+    volumes:
+      - .:/mnt # Mount project directory to /mnt inside the container to write results
+
+networks:
+  app-network:
+    driver: bridge
