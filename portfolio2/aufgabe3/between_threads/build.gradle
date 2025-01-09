@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+
+repositories{
+    mavenCentral()
+}
+
+application {
+    mainClass = 'Main'
+}
+
+dependencies {
+    implementation 'org.zeromq:jeromq:0.6.0'
+}
