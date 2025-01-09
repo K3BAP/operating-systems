@@ -124,7 +124,7 @@ Folgende Tabellen beschreiben das System, auf dem die Tests durchgeführt wurden
 		TDP (Thermal Design Power) & 15 Watt \\
 		Maximale Temperatur & 105 °C \\
 		\hline
-		Arbeitsspeicher & 8GB DDR4-3200 \\
+		Arbeitsspeicher & 2x4GB DDR4-3200 (Dual Channel) \\
 		\hline
 		Erscheinungsdatum & 07.01.2020 \\
 		\hline
@@ -413,14 +413,47 @@ Hier nochmal die genauen Werte:
 Wie man sieht, unterbietet ZeroMQ hier die Latenz der Semaphore leicht, was ich durchaus bemerkenswert finde.
 
 \subsection{Teil B (Inter-Process) - Versuchsaufbau / Implementierung}
+Nachdem ZeroMQ schon mal eingebaut war, war der Schritt von In-Process- zu Inter-Process-Kommunikation nicht mehr weit:
+Ich musste bloß den Worker Thread in ein eigenes Programm umwandeln (Code aus run()-Methode des Threads in eine eigene main-Methode verschieben) und einen eigenen ZeroMQ-Kontext darin verwalten.
+Zusätzlich wird nun als Protokoll nicht mehr \texttt{inproc}, sondern \texttt{ipc} verwendet, welches über \emph{UNIX domain sockets} kommuniziert.
+
+\begin{lstlisting}[language=java,caption={Antwort im Reader Thread}]
+public static void main(String[] args) {
+	try(ZContext context = new ZContext()) {
+		Socket receiver = context.createSocket(SocketType.PULL);
+		receiver.bind("ipc:///tmp/zmq-message.sock");
+		
+		Socket sender = context.createSocket(SocketType.PUSH);
+		sender.bind("ipc:///tmp/zmq-response.sock");
+		
+		System.out.println("Listening now");
+		while (true) {
+			receiver.recv();
+			sender.send(payload);
+		}
+	}
+	catch (Exception e) {
+		System.out.println("Reader is shutting down");
+	}
+}
+\end{lstlisting}
+
+
+Im Main-Programm musste dafür nur der Connect-String entsprechend angepasst werden bei der Erstellung der Socket-Objekte.
 
 \subsection{Teil B (Inter-Process) - Ergebnis}
+Da die Ergebnisse und somit die Laufzeit nun eine weitere Zehnerpotenz größer wurden, habe ich zum Ausgleich die Anzahl der Versuchsdurchläufe auf 1000 reduziert. Dadurch leidet die Präzision des errechneten Konfidenzintervalls, der Unterschied im Vergleich zu den vorhergegangenen Aufgaben ist aber dennoch offensichtlich.
+Hier ein Histogramm der Messwerte:
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.75\textwidth]{./img/zeromq_ipc}
 	\caption{Verteilung der Minima in der Versuchsreihe zu Aufgabe 3B}
 	\label{img:zeromq:ipc}
 \end{figure}
+
+Auch hier ist nur mit etwas Phantasie eine Normalverteilung zu erkennen, da die Ergebnisse recht lückenhaft sind.
+Trotzdem gehe ich hier wieder von einer Normalverteilung aus und berechne entsprechend das in Blau dargestellte 95\%-Konfidenzintervall:
 
 \begin{itemize}
 	\item Durchschnittliche Minimallatenz: $13,83 \mu s$
