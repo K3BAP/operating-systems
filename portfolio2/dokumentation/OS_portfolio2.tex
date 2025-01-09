@@ -144,6 +144,8 @@ Folgende Tabellen beschreiben das System, auf dem die Tests durchgeführt wurden
 		Java-Version & Java 21\\
 		Java-Implementierung & java-21-openjdk\\
 		\hline
+		ZeroMQ-Implementierung & JeroMQ 0.6.0\\
+		\hline
 	\end{tabular}
 \end{table}
 
@@ -212,7 +214,6 @@ private void measure(int recursions) {
 	long sendTime;
 	long receiveTime;
 	for (int i = 0; i < recursions; i++) {
-		// Record time first, then
 		sendTime = System.nanoTime();
 		lock.set(true);
 		while (lock.get()) {
@@ -290,32 +291,31 @@ Die Zeitmessung läuft im Main-Thread nun wiefolgt ab:
 Hier ein Auszug der entsprechenden Stellen aus dem Code:
 
 \begin{lstlisting}[language=java,caption={Semaphores: Latenzmessung im Main Thread}]
-	private void measure(int recursions) {
-		long sendTime;
-		long receiveTime;
-		for (int i = 0; i < recursions; i++) {
-			// Record time first, then
-			sendTime = System.nanoTime();
-			messageSemaphore.release();
-			replySemaphore.acquire();
-			receiveTime = System.nanoTime();
-			
-			sendTimes.add(sendTime);
-			receiveTimes.add(receiveTime);
-		}
+private void measure(int recursions) {
+	long sendTime;
+	long receiveTime;
+	for (int i = 0; i < recursions; i++) {
+		sendTime = System.nanoTime();
+		messageSemaphore.release();
+		replySemaphore.acquire();
+		receiveTime = System.nanoTime();
+		
+		sendTimes.add(sendTime);
+		receiveTimes.add(receiveTime);
 	}
+}
 \end{lstlisting}
 
 \begin{lstlisting}[language=java,caption={Freigeben der replySemaphore im Reader Thread}]
-	while (!isInterrupted()) {
-		try {
-			experiment.messageSemaphore.acquire();
-			experiment.replySemaphore.release();
-		} catch (InterruptedException e) {
-			System.out.println("Reader Thread shutting down.");
-			break;
-		}
+while (!isInterrupted()) {
+	try {
+		experiment.messageSemaphore.acquire();
+		experiment.replySemaphore.release();
+	} catch (InterruptedException e) {
+		System.out.println("Reader Thread shutting down.");
+		break;
 	}
+}
 \end{lstlisting}
 
 So wird am ende durch Halbierung der gemessenen Zeit die durchschnittliche Latenz der beiden Wege berechnet und schließlich nach einer gegebenen Anzahl von Wiederholungen das Minimum abgespeichert.
@@ -345,5 +345,71 @@ Die Latenz ist also um etwa zwei Zehnerpotenzen höher als bei der Verwendung vo
 Dies ist auch nur logisch, da ein Thread in einem Spinlock alle ihm zur Verfügung stehenden Ressourcen verwendet, um zu überprüfen, ob der Lock freigegeben wurde.
 Somit wird damit eine nahezu perfekte Latenz erzielt, jedoch bezahlt man den Preis dafür mit der CPU-Last, die ein Spinlock im Vergleich zu einer Semaphore hervorruft.
 Wird ein Thread durch eine Semaphore blockiert, so wird er schlafen gelegt und verursacht nur eine sehr niedrige CPU-Last.
+
+\section{Aufgabe 3 - Latenz bei Kommunikation mit ZeroMQ}
+\subsection{Teil A (In-Process) - Versuchsaufbau / Implementierung}
+Auch hier habe ich das Messungsverfahren aus den vorherigen Aufgaben nur leicht angepasst.
+Anstelle der beiden Semaphoren kommen nun zwei PUSH-PULL Message Queues zum Einsatz: Eine befördert Nachrichten vom Main-Thread zum Reader-Thread, die andere in die entgegengesetzte Richtung.
+Für den Socket wird als Protokoll \texttt{inproc} verwendet, welches die geringste Latenz bietet und für die Kommunikation innerhalb eines Prozesses gedacht ist.
+Das grundsätzliche Vorgehen unterscheidet sich jedoch kaum:
+
+\begin{lstlisting}[language=java,caption={ZeroMQ inproc: Latenzmessung im Main Thread}]
+private void measure(int recursions) throws InterruptedException {
+	long sendTime;
+	long receiveTime;
+	
+	for (int i = 0; i < recursions; i++) {
+		sendTime = System.nanoTime();
+		sender.send(payload);
+		receiver.recv();
+		receiveTime = System.nanoTime();
+		
+		sendTimes.add(sendTime);
+		receiveTimes.add(receiveTime);
+	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=java,caption={Antwort im Reader Thread}]
+try {
+	Socket receiver = context.createSocket(SocketType.PULL);
+	receiver.connect("inproc://message");
+	
+	Socket sender = context.createSocket(SocketType.PUSH);
+	sender.connect("inproc://response");
+	
+	while (!isInterrupted()) {
+		receiver.recv();
+		sender.send(payload);
+	}
+}
+catch (Exception e) {
+	System.out.println("Reader thread is shutting down");
+}
+\end{lstlisting}
+
+Das Setup der ZeroMQ-Sockets im Main-Thread spare ich mir an dieser Stelle, das kann gerne im Code oder der Dokumentation nachgelesen werden.
+Die \texttt{payload}, die hier als Nachricht und Antwort gesendet und empfangen wird, ist ein leeres Byte-Array, um unnötige Verzögerung durch die Nachrichtenübermittlung zu vermeiden und nur die Latenz zu messen.
+Auch hier wird wieder die Zeit eines Round-Trips gemessen und dann halbiert, um die tatsächliche Latenz einer Nachrichtenübermittlung zu ermitteln.
+
+\subsection{Teil A (In-Process) - Ergebnis}
+Die gemessenene Minimallatenzen sind in der gleichen Größenordnung wie die in Aufgabe 2 gemessenen Latenzen, daher habe ich hier die gleichen Parameter gesetzt wie zuvor: 10000 Wiederholungen pro Experiment und insgesamt 10000 Durchläufe. Hier ein Histogramm der Verteilung:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{./img/zeromq_inproc}
+	\caption{Verteilung der Minima in der Versuchsreihe zu Aufgabe 3A}
+	\label{img:zeromq:inproc}
+\end{figure}
+
+Das Konfidenzintervall ist hier wieder in Blau dargestellt.
+Hier nochmal die genauen Werte:
+\begin{itemize}
+	\item Durchschnittliche Minimallatenz: $1908 ns$
+	\item Untere Schranke des 95\%-Konfidenzintervalls: $1869 ns$
+	\item Obere Schranke des 95\%-Konfidenzintervalls: $1921 ns$
+\end{itemize}
+
+Wie man sieht, unterbietet ZeroMQ hier die Latenz der Semaphore leicht, was ich durchaus bemerkenswert finde.
 
 \end{document}
