@@ -12,6 +12,7 @@ public class Reader extends Thread {
 
     @Override
     public void run() {
+        try {
             Socket receiver = context.createSocket(SocketType.PULL);
             receiver.connect("inproc://message");
 
@@ -22,5 +23,9 @@ public class Reader extends Thread {
                 receiver.recv();
                 sender.send(payload);
             }
+        }
+        catch (Exception e) {
+            System.out.println("Reader thread is shutting down");
+        }
     }
 }
