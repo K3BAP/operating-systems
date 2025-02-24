@@ -1,0 +1,118 @@
+% !TeX spellcheck = de_DE
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{amsmath,amsthm,amsfonts,amssymb,amscd}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage[skip=3pt]{parskip}
+\usepackage[ngerman]{babel}
+\pagestyle{empty}
+\titleformat*{\section}{\large\bfseries}
+\titleformat*{\subsection}{\bfseries}
+
+%
+\geometry{
+	a4paper,
+	total={170mm,240mm},
+	left=20mm,
+	top=30mm,
+}
+
+\date{}
+%Bitte ausfüllen
+\newcommand\course{Betriebssysteme}
+\newcommand\hwnumber{\large Portfolio 3}
+\newcommand\Name{Fabian Sponholz}
+\newcommand\Neptun{1561546}
+
+%Matheinheiten
+\newcommand\m{\:\textrm{m}}
+\newcommand\M{\:\Big[\textrm{m}\Big]}
+\newcommand\mm{\:\textrm{mm}}
+\newcommand\MM{\:\Big[\textrm{mm}\Big]}
+\newcommand\un{\underline}
+\newcommand\s{\:\textrm{s}}
+\newcommand\bS{\:\Big[\textrm{S}\Big]}
+\newcommand\ms{\:\frac{\textrm{m}}{\textrm{s}}}
+\newcommand\MS{\:\Big[\frac{\textrm{m}}{\textrm{s}}\Big]}
+\newcommand\mss{\:\frac{\textrm{m}}{\textrm{s}^2}}
+\newcommand\MSS{\:\Big[\frac{\textrm{m}}{\textrm{s}^2}\Big]}
+
+%Trennlinie
+\newcommand\separator{\rule{\linewidth}{0.5pt}}
+
+%Bitte nicht einstellen
+\renewcommand{\figurename}{Abbildung}
+\renewcommand{\tablename}{Tabelle}
+\pagestyle{fancyplain}
+\headheight 35pt
+\lhead{\Name\\\Neptun}
+\chead{\textbf{ \hwnumber}}
+\rhead{\course \\ \today}
+\lfoot{}
+\cfoot{}
+\rfoot{\small\thepage}
+\headsep 1.5em
+
+\lstset{
+	basicstyle=\ttfamily\small,
+	columns=fullflexible,
+	frame=single,
+	frameround=tttt,
+	rulecolor=\color{gray},
+}
+% http://www.bollchen.de/blog/2011/04/good-looking-line-breaks-with-the-listings-package/
+\lstset{
+	prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookrightarrow\space}},
+	breaklines=true,
+	breakatwhitespace=true,
+	numbers=left,
+	numberstyle=\scriptsize,
+}
+\lstset{
+	backgroundcolor=\color{white},
+	extendedchars=true,
+	basicstyle=\footnotesize\ttfamily,
+	showstringspaces=false,
+	showspaces=false,
+	numbers=left,
+	numberstyle=\footnotesize,
+	numbersep=9pt,
+	tabsize=2,
+	breaklines=true,
+	showtabs=false,
+	captionpos=b
+}
+\lstset{
+	keywordstyle=\color{blue}\bfseries,
+	ndkeywordstyle=\color{darkgray}\bfseries,
+	identifierstyle=\color{black},
+	commentstyle=\color{purple}\ttfamily,
+	stringstyle=\color{red}\ttfamily
+}
+
+\begin{document}
+	
+\section*{Erste Überlegungen zur Umsetzung}
+Um die drei geforderten Funktionalitäten umzusetzen, denke ich, dass man diese in drei Methoden gießen sollte:
+Eine zum Lesen, eine zum Schreiben und eine zum Löschen von Dateien.
+
+\subsection*{Lesen von Dateien}
+Um Dateien konsistent zu lesen, ohne Dateisperren zu verwenden, muss vor dem Lesen ein ZFS Snapshot erstellt werden.
+Der Inhalt der Datei wird dann aus dem Snapshot gelesen, anstelle des eigentlichen Dateisystems.
+So wird sichergestellt, dass parallele Schreibvorgänge auf der selben Datei keine Inkonsistenzen hervorrufen:
+Sollte ein paralleler Schreibzugriff stattfinden, wird der Snapshot aufgrund des Copy-On-Write-Prinzips immer die unveränderte Version vor dem Schreibvorgang beinhalten.
+
+\subsection*{Löschen von Dateien}
+Das Löschen von Dateien durch die \texttt{unlink()}-Funktion oder den \texttt{rm}-Befehl sind auf Linux-Systemen atomar.
+Daher ergibt es keinen Sinn, vor dem Löschen einen Snapshot zu erstellen.
+
+
+\end{document}
