@@ -113,6 +113,17 @@ Sollte ein paralleler Schreibzugriff stattfinden, wird der Snapshot aufgrund des
 \subsection*{Löschen von Dateien}
 Das Löschen von Dateien durch die \texttt{unlink()}-Funktion oder den \texttt{rm}-Befehl sind auf Linux-Systemen atomar.
 Daher ergibt es keinen Sinn, vor dem Löschen einen Snapshot zu erstellen.
+Auftretende Konflikte müssen aber bei der Read-Write-Transaktion erkannt werden.
+
+\subsection*{Lesen und Schreiben von Dateien}
+Hier wird zunächst eine Transaktion geöffnet, indem ein Snapshot erstellt wird. 
+Dann wird dem Nutzer der Dateiinhalt aus dem Snapshot zur Verfügung gestellt, wie beim normalen Lesen.
+Nun kann der Nutzer die Datei bearbeiten, den neuen Dateiinhalt schreiben und die Transaktion "committen".
+Nun wird geprüft, ob der Nutzer die Datei überhaupt verändert hat.
+Falls nicht, wird einfach nichts getan und der Snapshot wieder entfernt.
+Falls doch, wird noch auf inkonsistenzen geprüft: Eine Prüfsumme wird auf der Datei aus dem Snapshot erstellt, sowie aus der Datei vom Live-System.
+Sollte sich die Datei geändert haben, wird ein Rollback durchgeführt.
+Falls nicht, wird die Datei geschrieben und der Snapshot gelöscht.
 
 
 \end{document}
