@@ -57,7 +57,7 @@ public class ZFSUtil {
     }
 
     public static boolean deleteFile(String filePath) {
-        File file = new File(filePath);
+        File file = Path.of(ZFS_MOUNTPOINT, filePath).toFile();
         if (file.exists()) {
             return file.delete();
         }
