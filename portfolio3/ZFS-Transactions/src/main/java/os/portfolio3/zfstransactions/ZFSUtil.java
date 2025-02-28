@@ -19,9 +19,9 @@ import java.nio.file.Paths;
  * @author Fabian Sponholz (1561546)
  */
 public class ZFSUtil {
-    private static final String ZFS_MOUNTPOINT = "/mypool/myfs";
-    private static final String ZFS_SNAPSHOT_DIRECTORY = "/mypool/myfs/.zfs/snapshot";
-    private static final String ZFS_FILESYSTEM = "mypool/myfs";
+    public static String ZFS_MOUNTPOINT = "/mypool/myfs";
+    public static String ZFS_SNAPSHOT_DIRECTORY = "/mypool/myfs/.zfs/snapshot";
+    public static String ZFS_FILESYSTEM = "mypool/myfs";
 
     /**
      * Creates a ZFS snapshot with the given name.
