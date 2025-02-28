@@ -125,5 +125,42 @@ Falls doch, wird noch auf inkonsistenzen geprüft: Eine Prüfsumme wird auf der 
 Sollte sich die Datei geändert haben, wird ein Rollback durchgeführt.
 Falls nicht, wird die Datei geschrieben und der Snapshot gelöscht.
 
+\section*{Umsetzung der Transaction-Library}
+Meine Transaktions-Bibliothek besteht aus zwei Klassen. 
+Eine Klasse \texttt{ZFSUtil}, die als Interface zwischen Java und ZFS fungiert, indem sie Methoden zum Verwalten von Dateien und Snapshots bereitstellt und diese auf ZFS-Befehle abbildet.
+
+Zweitens eine Klasse \texttt{ZFSTransaction}, die die Anforderungen der Aufgabe mithilfe der ZFSUtils-Klasse umsetzt.
+Sie ermöglicht es, eine Transaktion zu öffnen, innerhalb der Transaktion Dateien zu lesen, zu bearbeiten und zu löschen, sowie die Transaktion am Ende zu committen.
+Erst beim Commit werden tatsächlich Änderungen am Live-Dateisystem vorgenommen. 
+Sollten Konflikte erkannt werden, wird ein Rollback durchgeführt und die Transaktion somit rückgängig gemacht.
+
+\subsection*{ZFSUtil: Implementierungsdetails}
+Zunächst einmal hat die Klasse ZFSUtils drei Konfigurations-Variablen: \texttt{ZFS\_MOUNTPOINT},\linebreak \texttt{ZFS\_SNAPSHOT\_DIRECTORY} und \texttt{ZFS\_FILESYSTEM}.
+Über diese kann das zu verwaltende ZFS-Dateisystem spezifiziert werden.
+Standardmäßig wird ein Dateisystem \texttt{mypool/myfs} verwendet, mit dem Standard-Mountpoint \texttt{/mypool/myfs} und dem Standart-Snapshot-Directory \linebreak \texttt{/mypool/myfs/.zfs/snapshot}
+
+Die grundlegende Funktionalität liegt in den Methoden \texttt{createSnapshot()}, \texttt{deleteSnapshot()} und \texttt{rollbackSnapshot()}.
+Diese verwenden die \texttt{Runtime.exec()}-Methode, um ZFS-Kommandos auf dem Hostsystem auszuführen und so ZFS-Snapshots zu verwalten.
+Mithilfe der \texttt{Process.waitFor()}-Methode wird jeweils gewartet, bis der erzeugte Prozess terminiert, um so eine Synchronisierung mit dem Java-Programm zu erreichen.
+
+Zusätzlich stehen noch Methoden zum Lesen von Dateien aus dem Live-Filesystem und aus Snapshots zur Verfügung, sowie Methoden zum Schreiben und Löschen von Dateien im Live-Filesystem.
+Hier kommt die Java IO- bzw NIO-API zum Einsatz.
+
+Zuletzt gibt es zum späteren Verifizieren der Konsistenz noch Methoden zum Berechnen von Hashwerten auf dem Inhalt einer Datei im Live-Filesystem bzw. in einem Snapshot.
+
+\subsection*{ZFSTransaction: Implementierungsdetails}
+Ein Objekt der Klasse \texttt{ZFSTransaction} hat zwei Attribute: Eine UUID, die die Transaktion eindeutig identifiziert und eine Map, in der Datei-Änderungen innerhalb der Transaktion verfolgt werden.
+
+Mithilfe der statischen Methode \texttt{ZFSTransaction.open()} wird eine neue Transaktion geöffnet, indem ein neues ZFSTransaction-Objekt initialisiert und ihm eine zufällige UUID zugewiesen wird.
+Dann wird ein ZFS-Snapshot erstellt, wobei der Name des Snapshots der UUID der Transaktion entspricht.
+So kann die Transaktion später durch einen Rollback auf den Snapshot zurückgesetzt werden.
+
+Nun hält das ZFSTransaction-Objekt einige Methoden bereit, um mit den Dateien zu interagieren.
+Zunächst gibt es die private Methode \texttt{openFile()}, die den Inhalt einer Datei aus dem Snapshot der Transaktion in die \texttt{files}-Map lädt.
+Ist die Datei nicht vorhanden, wird ein leerer String in die Map geschrieben, um das erstellen einer neuen, leeren Datei zu simulieren.
+
+Die \texttt{readFile()}-Methode liest den Inhalt einer Datei aus der \texttt{files}-Map aus und gibt diese zurück.
+Falls die Datei nicht enthalten ist, wird sie mithilfe der \texttt{openFile()}-Methode geladen.
+
 
 \end{document}
