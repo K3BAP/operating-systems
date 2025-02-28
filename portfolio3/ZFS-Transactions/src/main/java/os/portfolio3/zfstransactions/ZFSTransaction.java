@@ -60,7 +60,7 @@ public class ZFSTransaction {
         reset();
     }
 
-    private void commit() throws IOException, InterruptedException {
+    private boolean commit() throws IOException, InterruptedException {
         boolean conflictDetected = false;
         for (String filename : files.keySet()) {
             if (ZFSUtil.getHashOfSnapshot(filename, transactionId.toString()) == ZFSUtil.getHashOfFile(filename)) {
@@ -75,13 +75,13 @@ public class ZFSTransaction {
             }
         }
         if (conflictDetected) {
-            System.out.println("Conflict detected. Rolling back.");
             ZFSUtil.rollbackSnapshot(this.transactionId.toString());
             close();
+            return false;
         }
         else {
-            System.out.println("Committed successfully.");
             close();
+            return true;
         }
     }
 
@@ -99,5 +99,9 @@ public class ZFSTransaction {
         System.out.println("File Content: " + transaction.readFile("test.txt"));
         transaction.writeFile("test.txt", "Hello World!");
         transaction.commit();
+
+        ZFSTransaction transaction2 = ZFSTransaction.open();
+        transaction2.deleteFile("test.txt");
+        transaction2.commit();
     }
 }
