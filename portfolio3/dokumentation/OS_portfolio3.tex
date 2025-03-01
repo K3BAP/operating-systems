@@ -146,7 +146,7 @@ Mithilfe der \texttt{Process.waitFor()}-Methode wird jeweils gewartet, bis der e
 Zusätzlich stehen noch Methoden zum Lesen von Dateien aus dem Live-Filesystem und aus Snapshots zur Verfügung, sowie Methoden zum Schreiben und Löschen von Dateien im Live-Filesystem.
 Hier kommt die Java IO- bzw NIO-API zum Einsatz.
 
-Zuletzt gibt es zum späteren Verifizieren der Konsistenz noch Methoden zum Berechnen von Hashwerten auf dem Inhalt einer Datei im Live-Filesystem bzw. in einem Snapshot.
+Zuletzt gibt es zum späteren Verifizieren der Konsistenz noch Methoden zum holen des File-Objekts einer Datei im Live-Filesystem bzw. in einem Snapshot, um daraus später den Zeitstempel zu extrahieren.
 
 \subsection*{ZFSTransaction: Implementierungsdetails}
 Ein Objekt der Klasse \texttt{ZFSTransaction} hat zwei Attribute: Eine UUID, die die Transaktion eindeutig identifiziert und eine Map, in der Datei-Änderungen innerhalb der Transaktion verfolgt werden.
@@ -159,8 +159,32 @@ Nun hält das ZFSTransaction-Objekt einige Methoden bereit, um mit den Dateien z
 Zunächst gibt es die private Methode \texttt{openFile()}, die den Inhalt einer Datei aus dem Snapshot der Transaktion in die \texttt{files}-Map lädt.
 Ist die Datei nicht vorhanden, wird ein leerer String in die Map geschrieben, um das erstellen einer neuen, leeren Datei zu simulieren.
 
-Die \texttt{readFile()}-Methode liest den Inhalt einer Datei aus der \texttt{files}-Map aus und gibt diese zurück.
-Falls die Datei nicht enthalten ist, wird sie mithilfe der \texttt{openFile()}-Methode geladen.
+Folgende Methoden stehen zur direkten Interaktion bereit:
+
+\begin{itemize}
+	\item Die \texttt{readFile()}-Methode liest den Inhalt einer Datei aus der \texttt{files}-Map aus und gibt diese zurück.
+	Falls die Datei nicht enthalten ist, wird sie mithilfe der \texttt{openFile()}-Methode geladen.
+	
+	\item Die \texttt{writeFile()}-Methode schreibt den Inhalt für eine Datei in die \texttt{files}-Map.
+	So wird der Inhalt bei Abschluss der Transaktion in die Datei geschrieben.
+	
+	\item Die \texttt{deleteFile()}-Methode setzt den Inhalt einer Datei in der \texttt{files}-Map auf \texttt{null}.
+	So wird die Datei bei Abschluss der Transaktion gelöscht.
+	
+	\item Die \texttt{close()}-Methode schließt eine Transaktion ab, indem der entsprechende Snapshot im ZFS gelöscht wird.
+	Zudem wird die \texttt{files}-Map geleert und die UUID auf \texttt{null} gesetzt, wodurch das ZFSTransaction-Objekt nicht weiter verwendet werden kann.
+	
+	\item Die \texttt{rollback()}-Methode führt einen Rollback auf den Snapshot vor der Transaktion durch. 
+	Dadurch werden alle Veränderungen seit Transaktionsbeginn verworfen.
+	Zuletzt wird die \texttt{close()}-Methode aufgerufen.
+	
+	\item Die \texttt{commit()}-Methode wendet die Änderungen, die in der \texttt{files}-Map gespeichert wurden, an.
+	Für jede Datei wird zunächst die Konsistenz geprüft, indem der Zeitstempel der Datei aus dem Snapshot mit der Datei aus dem Live-System verglichen wird.
+	Falls die Zeitstempel übereinstimmen, wird der neue Dateiinhalt geschrieben.
+	Wird an irgendeiner Stelle eine Inkonsistenz (Abweichender Zeitstempel) festgestellt, so wird der Schreibvorgang abgebrochen und ein Rollback durchgeführt.
+	Zuletzt wird die \texttt{close()}-Methode aufgerufen und die Transaktion somit geschlossen.
+\end{itemize}
+
 
 
 \end{document}
