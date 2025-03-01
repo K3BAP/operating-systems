@@ -145,7 +145,7 @@ public class ZFSTransaction {
      *         operations.
      * @throws InterruptedException if the commit or rollback process is interrupted.
      */
-    private boolean commit() throws IOException, InterruptedException {
+    public boolean commit() throws IOException, InterruptedException {
         boolean conflictDetected = false;
         for (String filename : files.keySet()) {
             if (ZFSUtil.getFileFromSnapshot(filename, transactionId.toString()).lastModified() == ZFSUtil.getFile(filename).lastModified()) {

@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.google.code.gson:gson:2.12.1")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
@@ -19,6 +20,22 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes["Main-Class"] = "os.portfolio3.brainstorm.Main"
+    }
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
+
+
+
 application {
-    mainClass = "os.portfolio3.zfstransactions.ZFSTransaction"
+    mainClass = "os.portfolio3.brainstorm.Main"
 }

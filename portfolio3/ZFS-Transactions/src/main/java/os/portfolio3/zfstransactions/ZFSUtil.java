@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * A utility class for interacting with ZFS file systems. This class provides methods
@@ -154,6 +155,19 @@ public class ZFSUtil {
      */
     public static File getFileFromSnapshot(String filename, String snapshotName) throws IOException {
         return Path.of(ZFS_SNAPSHOT_DIRECTORY, snapshotName, filename).toFile();
+    }
+
+    public static List<String> getFileList() {
+        try {
+            return Files.list(Paths.get(ZFS_MOUNTPOINT))
+                    .filter(Files::isRegularFile)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .toList();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     private static void runCommand(String[] command) throws IOException, InterruptedException {
