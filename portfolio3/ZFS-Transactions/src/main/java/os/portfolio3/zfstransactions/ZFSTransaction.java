@@ -148,7 +148,7 @@ public class ZFSTransaction {
     private boolean commit() throws IOException, InterruptedException {
         boolean conflictDetected = false;
         for (String filename : files.keySet()) {
-            if (ZFSUtil.getHashOfSnapshot(filename, transactionId.toString()) == ZFSUtil.getHashOfFile(filename)) {
+            if (ZFSUtil.getFileFromSnapshot(filename, transactionId.toString()).lastModified() == ZFSUtil.getFile(filename).lastModified()) {
                 if (files.get(filename) != null)
                     ZFSUtil.writeFile(filename, files.get(filename));
                 else

@@ -3,6 +3,7 @@ package os.portfolio3.zfstransactions;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -96,7 +97,7 @@ public class ZFSUtil {
     }
 
     private static String readFile(Path filePath) throws IOException {
-        return new String(java.nio.file.Files.readAllBytes(filePath));
+        return new String(Files.readAllBytes(filePath));
     }
 
     /**
@@ -138,13 +139,8 @@ public class ZFSUtil {
      * @return the hash code of the file's content if the file exists, or 0 if the file does not exist
      * @throws IOException if an I/O error occurs while accessing the file
      */
-    public static int getHashOfFile(String filename) throws IOException {
-        try {
-            return readFile(filename).hashCode();
-        }
-        catch (NoSuchFileException e) {
-            return 0;
-        }
+    public static File getFile(String filename) throws IOException {
+        return Path.of(ZFS_MOUNTPOINT, filename).toFile();
     }
 
     /**
@@ -156,13 +152,8 @@ public class ZFSUtil {
      * @return the hash code of the file's content if the file exists in the snapshot, or 0 if the file does not exist
      * @throws IOException if an I/O error occurs while accessing the file
      */
-    public static int getHashOfSnapshot(String filename, String snapshotName) throws IOException {
-        try {
-            return readFileFromSnapshot(filename, snapshotName).hashCode();
-        }
-        catch (NoSuchFileException e) {
-            return 0;
-        }
+    public static File getFileFromSnapshot(String filename, String snapshotName) throws IOException {
+        return Path.of(ZFS_SNAPSHOT_DIRECTORY, snapshotName, filename).toFile();
     }
 
     private static void runCommand(String[] command) throws IOException, InterruptedException {
