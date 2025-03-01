@@ -75,8 +75,7 @@ public class ZFSTransaction {
     }
 
     /**
-     * Writes the specified content to a file within the transaction. If the file
-     * is not present, it will be opened and added to the internal map before writing.
+     * Writes the specified content to a file within the transaction.
      *
      * @param filename the name of the file to which the content will be written
      * @param fileContent the content to be written to the file
@@ -84,7 +83,6 @@ public class ZFSTransaction {
      * @throws IOException if an I/O error occurs while accessing the file
      */
     public ZFSTransaction writeFile(String filename, String fileContent) throws IOException {
-        if (!files.containsKey(filename)) openFile(filename);
         files.put(filename, fileContent);
         return this;
     }
