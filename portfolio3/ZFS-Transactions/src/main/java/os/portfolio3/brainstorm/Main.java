@@ -58,22 +58,38 @@ public class Main {
                 listIdeas();
                 break;
             case "add":
-                System.out.println("Enter idea name: ");
                 if (commandParts.length > 1) {
                     name = commandParts[1];
                 }
-                else name = scanner.nextLine();
+                else {
+                    System.out.println("Enter idea name: ");
+                    name = scanner.nextLine();
+                }
 
                 System.out.println("Enter idea: ");
                 String idea = scanner.nextLine();
                 addIdea(name, idea);
+                break;
+            case "remove":
+                System.out.println("Enter idea name: ");
+                if (commandParts.length > 1) {
+                    name = commandParts[1];
+                }
+                else {
+                    System.out.println("Enter idea name: ");
+                    name = scanner.nextLine();
+                }
+                removeIdea(name);
                 break;
             case "show":
                 System.out.println("Enter idea name: ");
                 if (commandParts.length > 1) {
                     name = commandParts[1];
                 }
-                else name = scanner.nextLine();
+                else {
+                    System.out.println("Enter idea name: ");
+                    name = scanner.nextLine();
+                }
                 showIdea(name);
                 break;
             case "comment":
@@ -81,11 +97,14 @@ public class Main {
                 if (commandParts.length > 1) {
                     name = commandParts[1];
                 }
-                else name = scanner.nextLine();
+                else {
+                    System.out.println("Enter idea name: ");
+                    name = scanner.nextLine();
+                }
                 addComment(name, scanner);
                 break;
             case "help":
-                System.out.println("Available commands: hello, list, add, show, comment, help, exit");
+                System.out.println("Available commands: hello, list, add, remove, show, comment, help, exit");
                 break;
             default:
                 System.out.println("Unknown command: " + command);
@@ -116,6 +135,19 @@ public class Main {
             System.out.println("Idea added successfully!");
         } else {
             System.out.println("Failed to add idea!");
+        }
+    }
+
+    public static void removeIdea(String name) {
+        System.out.println("Removing idea: " + name);
+        try {
+            ZFSTransaction.open()
+                .deleteFile(name)
+                .commit();
+        } catch (IOException e) {
+            System.out.println("Failed to remove idea!");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
