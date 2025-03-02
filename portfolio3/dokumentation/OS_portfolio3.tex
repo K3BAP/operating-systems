@@ -185,6 +185,12 @@ Folgende Methoden stehen zur direkten Interaktion bereit:
 	Zuletzt wird die \texttt{close()}-Methode aufgerufen und die Transaktion somit geschlossen.
 \end{itemize}
 
+\section*{Entwicklung eines Brainstorming-Tools}
+Nun habe ich auf Basis der zuvor angelegten Bibliothek ein Brainstorming-Tool entwickelt, das es ermöglicht, Ideen zu erstellen und Kommentare zu hinterlassen.
+Jede Änderung wird mithilfe einer atomaren ZFS-Transaktion durchgeführt, welche im Falle einer Inkonsistenz wieder rückgängig gemacht werden kann.
+
+Das Programm kann entweder direkt über die Kommandozeile mit entsprechenden Parametern verwendet werden, oder ohne Parameter um eine REPL zu starten.
+
 
 
 \end{document}
