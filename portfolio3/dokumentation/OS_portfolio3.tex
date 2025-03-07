@@ -191,6 +191,24 @@ Jede Änderung wird mithilfe einer atomaren ZFS-Transaktion durchgeführt, welch
 
 Das Programm kann entweder direkt über die Kommandozeile mit entsprechenden Parametern verwendet werden, oder ohne Parameter um eine REPL zu starten.
 
+Folgende Funktionen bzw. Kommandos stehen zur Verfügung:
+\begin{itemize}
+	\item \texttt{list} listet alle Ideen auf. Dafür werden einfach alle Dateien im System aufgelistet. Hierfür wird keine Transaktion benötigt.
+	\item \texttt{add} fügt eine neue Idee hinzu. 
+	Der Dateiname kann über ein Argument oder über eine interaktive Eingabe übergeben werden, der Inhalt (Beschreibung der Idee) wird in jedem Fall vom Standard-In gelesen.
+	Nachfolgend wird eine Datei erstellt, und die Idee im JSON-Format abgespeichert.
+	Dies geschieht im Rahmen einer ZFSTransaction, wodurch die Operation atomar und isoliert stattfindet.
+	\item \texttt{remove} entfernt eine Idee: Somit wird die entsprechende Datei gelöscht.
+	Dies findet im Rahmen einer ZFSTransaction statt.
+	\item \texttt{show} liest eine Idee inklusive Kommentaren ein und gibt diese auf der Konsole aus.
+	Um konsistenten Dateiinhalt zu gewährleisten, wird eine ZFSTransaction verwendet.
+	\item \texttt{comment} ist die spannendste Funktion:
+	Hier wird im Rahmen einer ZFSTransaction zunächst eine Idee inklusive der Kommentare gelesen und ausgegeben. Dann hat der Nutzer die Möglichkeit, einen neuen Kommentar hinzuzufügen.
+	Schlussendlich wird der neue Dateiinhalt geschrieben und die Transaktion mit einem \emph{commit} abgeschlossen.
+	Sollte also in der Zwischenzeit ein anderer Kommentar geschrieben worden sein, so wird die Transaktion zurückgerollt.
+	
+\end{itemize}
+
 
 
 \end{document}
