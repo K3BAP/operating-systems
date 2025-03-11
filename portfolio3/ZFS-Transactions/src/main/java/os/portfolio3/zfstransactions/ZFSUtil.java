@@ -171,7 +171,7 @@ public class ZFSUtil {
     }
 
     private static void runCommand(String[] command) throws IOException, InterruptedException {
-        Process commandProcess = Runtime.getRuntime().exec(command);
+        Process commandProcess = new ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.INHERIT).start();
         int status = commandProcess.waitFor();
         if (status != 0) {
             throw new IOException("Command " + String.join(" ", command) + " exited with status " + status);

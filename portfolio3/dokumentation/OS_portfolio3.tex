@@ -224,6 +224,21 @@ Zur Validierung habe ich einige Szenarien implementiert und ausgewertet:
 	Das selbe in Grün: Diesmal werden zwei verschiedene Dateien bearbeitet.
 	Es sollte also zu keinen Problemen kommen.\\
 	\textbf{Ergebnis:} Wie erwartet treten keine Konflikte auf und beide Dateien werden erfolgreich geschrieben.
+	
+	\item Konkurrierende Lese- und Schreibzugriffe:\\
+	Hier führen zwei Threads parallel Lese- und Schreibzugriffe auf die selbe Datei aus.
+	Der schreibende Thread schreibt eine zufällige Anzahl des Wortes \texttt{consistentcontent} in die Datei, während der lesende Thread mithilfe eines regulären Ausdrucks die Konsistenz des Inhalts verifiziert.\\
+	\textbf{Ergebnis:} Es treten beim lesenden Thread keine Inkonsistenzen auf.
+	
+	\item Konkurrierende Schreibzugriffe:\\
+	Hier habe ich 10 Threads erstellt, die jeweils auf die selbe Datei zugreifen und dort jeweils das Wort \texttt{consistentcontent} an den Dateiinhalt anfügen.
+	Dieser Prozess wird je 10 mal wiederholt, sodass insgesamt 100 Transaktionen durchgeführt werden.
+	So werden Inkonsistenzen und somit Rollbacks provoziert.
+	Dabei zähle ich die Rollbacks, die gemacht werden, sowie auch die Exceptions, die bei Fehlern in den ZFS-Kommandos auftreten.\\
+	\textbf{Ergebnis:} Leider scheint es Probleme beim simultanen Rollback mehrerer Snapshots zu geben.
+	Das \texttt{zfs rollback} Kommando gibt hier immer einen Fehler zurück, sodass die Rollbacks extrem selten erfolgreich sind.
+	Leider ist es mir auch nicht gelungen, die genaue Fehlermeldung der Kommandos zu extrahieren, sodass ich dem nicht weiter auf den Grund gehen konnte.
+	Bei weniger Threads steigt die Wahrscheinlichkeit, dass ein Rollback provoziert wird und erfolgreich durchläuft.
 \end{itemize}
 
 
