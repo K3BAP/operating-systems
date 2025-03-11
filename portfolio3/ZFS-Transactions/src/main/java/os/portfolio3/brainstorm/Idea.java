@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.Gson;
 
+/**
+ * @author Fabian Sponholz (1561546)
+ */
 public class Idea {
     private String idea;
     private List<String> comments;

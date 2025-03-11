@@ -20,6 +20,8 @@ import java.util.*;
  * - Perform write, delete, or read operations within the snapshot context.
  * - Commit changes back to the main file system with conflict detection.
  * - Rollback changes in case of conflicts and reset the transaction state.
+ *
+ * @author Fabian Sponholz (1561546)
  */
 public class ZFSTransaction {
     private Map<String, String> files;
