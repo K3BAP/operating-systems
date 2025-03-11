@@ -209,6 +209,23 @@ Folgende Funktionen bzw. Kommandos stehen zur Verfügung:
 	
 \end{itemize}
 
+Zum ausführen des Tools empfehle ich, eine Jar-Datei mit \texttt{./gradlew jar} zu generieren und diese dann mit \texttt{(sudo) java -jar ./build/libs/ZFS-Transactions-1.0-SNAPSHOT.jar} aufzurufen, da Gradle selbst auch Dinge auf dem Standard-Out ausgibt und daher die Bedienung etwas unübersichtlich ist.
+
+\section*{Entwicklung eines Validierungs-Tools}
+Zur Validierung habe ich einige Szenarien implementiert und ausgewertet:
+\begin{itemize}
+	\item Konkurrierende Schreibzugriffe auf die selbe Datei:\\
+	Hier werden gleichzeitig zwei Transaktionen auf einer Datei geöffnet, die verschiedene Inhalte in die selbe Datei schreiben.
+	Dann werden die Transaktionen nacheinander committet.\\
+	\textbf{Ergebnis:} Beim commit der zweiten Transaktion wird eine Inkonsistenz erkannt und zurückgerollt.
+	Schlussendlich sind dann beide Transaktionen nicht durchgeführt und das Dateisystem ist wieder im ursprünglichen Zustand.
+	
+	\item Konkurrierende Schreibzugriffe auf verschiedene Dateien:\\
+	Das selbe in Grün: Diesmal werden zwei verschiedene Dateien bearbeitet.
+	Es sollte also zu keinen Problemen kommen.\\
+	\textbf{Ergebnis:} Wie erwartet treten keine Konflikte auf und beide Dateien werden erfolgreich geschrieben.
+\end{itemize}
+
 
 
 \end{document}

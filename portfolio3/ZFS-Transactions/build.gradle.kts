@@ -34,7 +34,12 @@ tasks.named<JavaExec>("run") {
     standardInput = System.`in`
 }
 
-
+tasks.register<JavaExec>("runBenchmark") {
+    group = "application"
+    description = "Runs the benchmark main class"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("os.portfolio3.benchmark.Benchmark")
+}
 
 application {
     mainClass = "os.portfolio3.brainstorm.Main"
